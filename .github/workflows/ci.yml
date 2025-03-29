@@ -64,8 +64,8 @@ jobs:
       - name: Run SonarQube analysis
         run: |
             sonar-scanner \
-            -Dsonar.organization=YourOrgName \
-            -Dsonar.projectKey=YourProjectKey \
+            -Dsonar.organization=HadesMori \
+            -Dsonar.projectKey=MyProject \
             -Dsonar.host.url="https://sonarcloud.io" \
             -Dsonar.login="${{ secrets.SONAR_TOKEN }}"
       - name: Запуск flake8 через Reviewdog
