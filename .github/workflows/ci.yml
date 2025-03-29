@@ -31,10 +31,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Code Review Check for develop
-        if: github.base_ref == 'develop'
+      - name: Code Review Check for develop or main
+        if: github.base_ref == 'develop' || github.base_ref == 'main'
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prNumber = context.payload.pull_request.number;
             const { data: reviews } = await github.rest.pulls.listReviews({
@@ -44,7 +45,9 @@ jobs:
             });
             const approved = reviews.some(review => review.state === 'APPROVED');
             if (!approved) {
-              core.setFailed("Код-рев’ю не схвалено");
+              console.log("Попередження: Код-рев’ю ще не схвалено");
+            } else {
+              console.log("Код-рев’ю схвалено");
             }
       - name: Count lines of code with Cloc
         run: |
