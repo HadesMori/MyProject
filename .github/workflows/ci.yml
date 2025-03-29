@@ -55,19 +55,6 @@ jobs:
           sudo apt-get install -y cloc
           cloc src/ > cloc-report.txt
           cat cloc-report.txt
-      - name: Install SonarScanner
-        run: |
-            curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
-            unzip sonar-scanner.zip
-            sudo mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
-            echo "/opt/sonar-scanner/bin" >> $GITHUB_PATH
-      - name: Run SonarQube analysis
-        run: |
-            sonar-scanner \
-            -Dsonar.organization=HadesMori \
-            -Dsonar.projectKey=MyProject \
-            -Dsonar.host.url="https://sonarcloud.io" \
-            -Dsonar.login="${{ secrets.SONAR_TOKEN }}"
       - name: Запуск flake8 через Reviewdog
         uses: reviewdog/action-flake8@v2
         with:
@@ -80,3 +67,14 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           level: info
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
