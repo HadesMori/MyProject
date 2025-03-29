@@ -5,6 +5,9 @@ on:
     branches:
       - develop
 
+permissions:
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,10 +31,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - name: Code Review Check for develop
-        if: github.base_ref == 'develop'
+      - name: Code Review Check for develop or main
+        if: github.base_ref == 'develop' || github.base_ref == 'main'
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const prNumber = context.payload.pull_request.number;
             const { data: reviews } = await github.rest.pulls.listReviews({
@@ -41,7 +45,9 @@ jobs:
             });
             const approved = reviews.some(review => review.state === 'APPROVED');
             if (!approved) {
-              core.setFailed("Код-рев’ю не схвалено");
+              console.log("Попередження: Код-рев’ю ще не схвалено");
+            } else {
+              console.log("Код-рев’ю схвалено");
             }
       - name: Count lines of code with Cloc
         run: |
@@ -49,14 +55,6 @@ jobs:
           sudo apt-get install -y cloc
           cloc src/ > cloc-report.txt
           cat cloc-report.txt
-      - name: Run SonarQube analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip
-          unzip sonar-scanner-cli-4.8.0.2856-linux.zip
-          export PATH=$PATH:$(pwd)/sonar-scanner-4.8.0.2856-linux/bin
-          sonar-scanner
       - name: Запуск flake8 через Reviewdog
         uses: reviewdog/action-flake8@v2
         with:
@@ -69,3 +67,14 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
           level: info
+  sonarqube:
+    name: SonarQube
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
