@@ -55,6 +55,12 @@ jobs:
           sudo apt-get install -y cloc
           cloc src/ > cloc-report.txt
           cat cloc-report.txt
+      - name: Install SonarScanner
+        run: |
+            curl -sSLo sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip
+            unzip sonar-scanner.zip
+            sudo mv sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner
+            echo "/opt/sonar-scanner/bin" >> $GITHUB_PATH
       - name: Run SonarQube analysis
         run: |
             sonar-scanner \
